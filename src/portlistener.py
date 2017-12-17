@@ -61,7 +61,7 @@ def start_bottle(self_port):
             raise HTTPError(status)
 
     ################################################################################################
-    # Recordings
+    # All data
     ################################################################################################
 
     @get(uri_get_all)
@@ -75,6 +75,159 @@ def start_bottle(self_port):
         try:
             #
             r = _device.getAll()
+            #
+            if not bool(r):
+                status = httpStatusFailure
+            else:
+                status = httpStatusSuccess
+            #
+            log_inbound(True, client, request.url, 'GET', status)
+            #
+            if isinstance(r, bool):
+                return HTTPResponse(status=status)
+            else:
+                return HTTPResponse(body=r, status=status)
+            #
+        except Exception as e:
+            status = httpStatusServererror
+            log_inbound(False, client, request.url, 'GET', status, exception=e)
+            raise HTTPError(status)
+
+    ################################################################################################
+    # Structures
+    ################################################################################################
+
+    @get(uri_get_structures)
+    def get_structures():
+        #
+        try:
+            client = request.headers[service_header_clientid_label]
+        except:
+            client = request['REMOTE_ADDR']
+        #
+        try:
+            #
+            r = _device.getStructures()
+            #
+            if not bool(r):
+                status = httpStatusFailure
+            else:
+                status = httpStatusSuccess
+            #
+            log_inbound(True, client, request.url, 'GET', status)
+            #
+            if isinstance(r, bool):
+                return HTTPResponse(status=status)
+            else:
+                return HTTPResponse(body=r, status=status)
+            #
+        except Exception as e:
+            status = httpStatusServererror
+            log_inbound(False, client, request.url, 'GET', status, exception=e)
+            raise HTTPError(status)
+
+    @get(uri_get_structure_specific)
+    def get_structure_specific(structure_id):
+        #
+        try:
+            client = request.headers[service_header_clientid_label]
+        except:
+            client = request['REMOTE_ADDR']
+        #
+        try:
+            #
+            r = _device.getStructure(structure_id)
+            #
+            if not bool(r):
+                status = httpStatusFailure
+            else:
+                status = httpStatusSuccess
+            #
+            log_inbound(True, client, request.url, 'GET', status)
+            #
+            if isinstance(r, bool):
+                return HTTPResponse(status=status)
+            else:
+                return HTTPResponse(body=r, status=status)
+            #
+        except Exception as e:
+            status = httpStatusServererror
+            log_inbound(False, client, request.url, 'GET', status, exception=e)
+            raise HTTPError(status)
+
+    ################################################################################################
+    # Devices
+    ################################################################################################
+
+    @get(uri_get_devices)
+    def get_devices():
+        #
+        try:
+            client = request.headers[service_header_clientid_label]
+        except:
+            client = request['REMOTE_ADDR']
+        #
+        try:
+            #
+            r = _device.getDevices()
+            #
+            if not bool(r):
+                status = httpStatusFailure
+            else:
+                status = httpStatusSuccess
+            #
+            log_inbound(True, client, request.url, 'GET', status)
+            #
+            if isinstance(r, bool):
+                return HTTPResponse(status=status)
+            else:
+                return HTTPResponse(body=r, status=status)
+            #
+        except Exception as e:
+            status = httpStatusServererror
+            log_inbound(False, client, request.url, 'GET', status, exception=e)
+            raise HTTPError(status)
+
+    @get(uri_get_devices_type)
+    def get_devices_type(device_type):
+        #
+        try:
+            client = request.headers[service_header_clientid_label]
+        except:
+            client = request['REMOTE_ADDR']
+        #
+        try:
+            #
+            r = _device.getDevicesType(device_type)
+            #
+            if not bool(r):
+                status = httpStatusFailure
+            else:
+                status = httpStatusSuccess
+            #
+            log_inbound(True, client, request.url, 'GET', status)
+            #
+            if isinstance(r, bool):
+                return HTTPResponse(status=status)
+            else:
+                return HTTPResponse(body=r, status=status)
+            #
+        except Exception as e:
+            status = httpStatusServererror
+            log_inbound(False, client, request.url, 'GET', status, exception=e)
+            raise HTTPError(status)
+
+    @get(uri_get_device_specific)
+    def get_devices_specific(device_type, device_id):
+        #
+        try:
+            client = request.headers[service_header_clientid_label]
+        except:
+            client = request['REMOTE_ADDR']
+        #
+        try:
+            #
+            r = _device.getDevice(device_type, device_id)
             #
             if not bool(r):
                 status = httpStatusFailure

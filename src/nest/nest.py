@@ -27,13 +27,10 @@ class Nest():
 
     def createSession(self):
         with requests.Session() as s:
-            s.headers.update({'Authorization': self._header_token(),
+            s.headers.update({'Authorization': 'Bearer {authcode}'.format(authcode=get_cfg_details_oauthToken()),
                               'Connection': 'close',
                               'content-type': 'application/json'})
         self.nestSession = s
-
-    def _header_token(self):
-        return 'Bearer {authcode}'.format(authcode=get_cfg_details_oauthToken())
 
     def _tokencheck(self):
         # TODO
@@ -51,45 +48,36 @@ class Nest():
         else:
             return False
 
-    def _read_json_all(self):
-        return self._read_nest_json()
-
-    def _read_json_devices(self, device_type=False, device_id=False):
-        if bool(device_type) and bool(device_id):
-            device_url = '{device_type}/{device_id}'.format(device_type=device_type, device_id=device_id)
-        else:
-            device_url = ''
-        return self._read_nest_json(model='bindings'+device_url)
-
-    def _read_json_structures(self):
-        return self._read_nest_json(model='structures')
-
-    def _read_nest_json(self, model=''):
-        #
-        r = self.nestSession.get(self._get_url() + model)
-        #
+    def _check_redirect(self, r):
         if len(r.history) > 0:
             if r.history[0].is_redirect:
                 self._set_redirect_url = r.url
+
+    def _read_nest_json(self, uri=''):
+        #
+        url = self._get_url()
+        #
+        r = self.nestSession.get('{url}{uri}'.format(url=url, uri=uri))
+        #
+        self._check_redirect(r)
         #
         if str(r.status_code).startswith('4'):
             return False
         #
         return r.json()
 
-    def _send_nest_json (self, json_cmd, model, device, id, retry=0):
+    def _send_nest_json(self, json_cmd, model, device, id, retry=0):
         #
         if retry >= 2:
             return False
         #
-        url2 = '{model}/{device}/{id}'.format(model=model, device=device, id=id)
+        url = self._get_url()
+        uri = '{model}/{device}/{id}'.format(model=model, device=device, id=id)
         #
-        r = self.nestSession.put(self._get_url() + url2,
+        r = self.nestSession.put('{url}{uri}'.format(url=url, uri=uri),
                                  data=json.dumps(json_cmd))
         #
-        if len(r.history) > 0:
-            if r.history[0].is_redirect:
-                self._redirect_url = r.url
+        self._check_redirect(r)
         #
         if str(r.status_code).startswith('4'):
             return False
@@ -104,6 +92,43 @@ class Nest():
             return self.nesturl_api
 
     def getAll(self):
-        data = self._read_json_all()
+        # TODO - neaten/strip returned data
+        data = self._read_nest_json()
         del data['metadata']
+        return data
+
+    def getStructures(self):
+        #
+        data = self._read_nest_json('structures/')
+        # TODO - neaten/strip returned data
+        #
+        return data
+
+    def getStructure(self, structure_id):
+        #
+        data = self._read_nest_json('devices/{structure_id}'.format(structure_id=structure_id))
+        # TODO - neaten/strip returned data
+        #
+        return data
+
+    def getDevices(self):
+        #
+        data = self._read_nest_json('devices/')
+        # TODO - neaten/strip returned data
+        #
+        return data
+
+    def getDevicesType(self, device_type):
+        #
+        data = self._read_nest_json('devices/{device_type}'.format(device_type=device_type))
+        # TODO - neaten/strip returned data
+        #
+        return data
+
+    def getDevice(self, device_type, device_id):
+        #
+        data = self._read_nest_json('devices/{device_type}/{device_id}'.format(device_type=device_type,
+                                                                               device_id=device_id))
+        # TODO - neaten/strip returned data
+        #
         return data
