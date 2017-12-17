@@ -1,0 +1,39 @@
+{
+    "service_id": "nest_account",
+    "name_long": "Household Nest",
+    "name_short": "Nest",
+    "groups": [
+        "Home"
+    ],
+    "subservices": [
+        {
+            "type": "thermostat",
+            "id": "peyiJNo0IldT2YlIVtYaGQ",
+            "groups": [
+                "Heating",
+                "Landing"
+            ]
+        },
+        {
+            "type": "protect",
+            "id": "RTMTKxsQTCxzVcsySOHPxKoF4OyCi001",
+            "groups": [
+                "Smoke Detectors",
+                "Kitchen"
+            ]
+        },
+        {
+            "type": "protect",
+            "id": "RTMTKxsQTCxzVcsySOHPxKoF4OyCi002",
+            "groups": [
+                "Smoke Detectors",
+                "Landing"
+            ]
+        }
+    ],
+    "details": {
+        "oauth_tokenexpiry": "24/01/2027 22:21:19",
+        "oauth_token": "c.f7lcKL6sDT7QWI2wrG1g... ...mgr7m0NA",
+        "oauth_state": "STATE"
+    }
+}
