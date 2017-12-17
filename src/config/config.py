@@ -77,6 +77,14 @@ def get_cfg_details():
     return get_config_json()['details']
 
 
+def get_cfg_details_clientSecret():
+    return get_cfg_details()['client_secret']
+
+
+def get_cfg_details_clientId():
+    return get_cfg_details()['client_id']
+
+
 def get_cfg_details_oauthToken():
     return get_cfg_details()['oauth_token']
 
@@ -94,3 +102,4 @@ def set_cfg_details_oauth(token, expiry, state):
     cfg['details']['oauth_token'] = token
     cfg['details']['oauth_tokenexpiry'] = expiry.strftime(oauthConfigTimeformat)
     cfg['details']['oauth_state'] = state
+    write_config(cfg)

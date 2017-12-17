@@ -34,6 +34,8 @@
     "details": {
         "oauth_tokenexpiry": "24/01/2027 22:21:19",
         "oauth_token": "c.f7lcKL6sDT7QWI2wrG1g... ...mgr7m0NA",
-        "oauth_state": "STATE"
+        "oauth_state": "STATE",
+        "client_id": "12345678-432a-0000-aa37-abcdefghijkl",
+        "client_secret": "6Nq1234Fah4k3218abdcbcdTI"
     }
 }
