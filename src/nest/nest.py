@@ -54,9 +54,6 @@ class Nest():
     def _read_json_all(self):
         return self._read_nest_json()
 
-    def _read_json_metadata(self):
-        return self._read_nest_json(model='metadata')
-
     def _read_json_devices(self, device_type=False, device_id=False):
         if bool(device_type) and bool(device_id):
             device_url = '{device_type}/{device_id}'.format(device_type=device_type, device_id=device_id)
