@@ -32,8 +32,8 @@ node {
                description: 'Location of log directory on host device',
                defaultValue: '*')
         //
-        githubUrl = 'https://github.com/robe16/jarvis.nest.git'
-        appName = 'jarvis.nest'
+        githubUrl = "https://github.com/robe16/jarvis.nest.git"
+        appName = "jarvis.nest"
         //
         build_args = ["--build-arg portApplication=${portApplication}"].join(" ")
         //
