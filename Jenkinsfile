@@ -51,8 +51,6 @@ node {
         stage("checkout") {
             git url: "${githubUrl}"
             sh "git rev-parse HEAD > .git/commit-id"
-            commit_id = readFile('.git/commit-id').trim()
-            echo "Git commit ID: ${commit_id}"
         }
 
         docker_img_name_build_id = "${appName}:${env.BUILD_ID}"
