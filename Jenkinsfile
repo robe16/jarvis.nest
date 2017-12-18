@@ -1,5 +1,7 @@
 echo "Running Build ID: ${env.BUILD_ID}"
 
+string githubUrl
+String appName
 String commit_id
 String build_args
 String deployLogin
@@ -14,12 +16,6 @@ node {
         //
         // Parameters passed through from the Jenkins Pipeline configuration
         //
-        string(name: 'githubUrl',
-               description: 'GitHub URL for checking out project',
-               defaultValue: 'https://github.com/robe16/jarvis.nest.git')
-        string(name: 'appName',
-               description: 'Name of application for Docker image and container',
-               defaultValue: 'jarvis.nest')
         string(name: 'deploymentServer',
                description: 'Server to deploy the Docker container',
                defaultValue: '*')
@@ -36,6 +32,8 @@ node {
                description: 'Location of log directory on host device',
                defaultValue: '*')
         //
+        githubUrl = 'https://github.com/robe16/jarvis.nest.git'
+        appName = 'jarvis.nest'
         //
         build_args = ["--build-arg portApplication=${portApplication}"].join(" ")
         //
@@ -51,15 +49,14 @@ node {
     if (params["deploymentServer"]!="*" && params["deploymentUsername"]!="*" && params["portMapped_broadcast"]!="*" && params["portMapped_application"]!="*" && params["fileConfig"]!="*" && params["folderLog"]!="*") {
 
         stage("checkout") {
-            git url: "${params.githubUrl}"
+            git url: "${githubUrl}"
             sh "git rev-parse HEAD > .git/commit-id"
             commit_id = readFile('.git/commit-id').trim()
             echo "Git commit ID: ${commit_id}"
         }
 
-        docker_img_name_build_id = "${params.appName}:${env.BUILD_ID}"
-        //docker_img_name_commit = "${params.appName}:${commit_id}"
-        docker_img_name_latest = "${params.appName}:latest"
+        docker_img_name_build_id = "${appName}:${env.BUILD_ID}"
+        docker_img_name_latest = "${appName}:latest"
 
         stage("build") {
             try {sh "docker image rm ${docker_img_name_latest}"} catch (error) {}
@@ -88,10 +85,10 @@ node {
 
         stage("start container"){
             // Stop existing container if running
-            sh "ssh ${deployLogin} \"docker rm -f ${params.appName} && echo \"container ${params.appName} removed\" || echo \"container ${params.appName} does not exist\"\""
+            sh "ssh ${deployLogin} \"docker rm -f ${appName} && echo \"container ${appName} removed\" || echo \"container ${appName} does not exist\"\""
             // Start new container
-            sh "ssh ${deployLogin} \"docker run --restart unless-stopped -d ${docker_volumes} --net=host --name ${params.appName} ${docker_img_name_latest}\""
-            //sh "ssh ${deployLogin} \"docker run --restart unless-stopped -d ${docker_volumes} ${docker_port_mapping} --name ${params.appName} ${docker_img_name_latest}\""
+            sh "ssh ${deployLogin} \"docker run --restart unless-stopped -d ${docker_volumes} --net=host --name ${appName} ${docker_img_name_latest}\""
+            //sh "ssh ${deployLogin} \"docker run --restart unless-stopped -d ${docker_volumes} ${docker_port_mapping} --name ${appName} ${docker_img_name_latest}\""
         }
 
     } else {
