@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import datetime
+import thread
 import json
 import requests as requests
 
@@ -6,15 +7,13 @@ from resources.lang.enGB.logs import *
 from parameters import temp_unit
 from log.log import log_outbound, log_internal
 from config.config import get_cfg_details_oauthToken, get_cfg_details_oauthTokenExpiry
-
-
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
-requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+from stream import nest_stream
 
 
 class Nest():
 
-    nest_session = requests.Session()
+    sessionNest_REST = requests.Session()
+    sessionNest_RESTstream = requests.Session()
 
     nesturl_api = 'https://developer-api.nest.com/'
 
@@ -23,14 +22,18 @@ class Nest():
         self._redirect_url = ''
         #
         self._tokencheck()
-        self.createSession()
+        self.createSessions()
 
-    def createSession(self):
+    def createSessions(self):
+        #
         with requests.Session() as s:
             s.headers.update({'Authorization': 'Bearer {authcode}'.format(authcode=get_cfg_details_oauthToken()),
                               'Connection': 'close',
                               'content-type': 'application/json'})
-        self.nestSession = s
+        self.sessionNest_REST = s
+
+    def threadStream(self):
+        thread.start_new_thread(nest_stream, (self._get_url(),))
 
     def _tokencheck(self):
         # TODO
@@ -57,7 +60,7 @@ class Nest():
         #
         url = self._get_url()
         #
-        r = self.nestSession.get('{url}{uri}'.format(url=url, uri=uri))
+        r = self.sessionNest_REST.get('{url}{uri}'.format(url=url, uri=uri))
         #
         self._check_redirect(r)
         #
@@ -74,8 +77,8 @@ class Nest():
         url = self._get_url()
         uri = '{model}/{device}/{id}'.format(model=model, device=device, id=id)
         #
-        r = self.nestSession.put('{url}{uri}'.format(url=url, uri=uri),
-                                 data=json.dumps(json_cmd))
+        r = self.sessionNest_REST.put('{url}{uri}'.format(url=url, uri=uri),
+                                      data=json.dumps(json_cmd))
         #
         self._check_redirect(r)
         #
