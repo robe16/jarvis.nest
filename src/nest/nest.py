@@ -47,7 +47,7 @@ class Nest():
     def _checkToken(self):
         exp = get_cfg_details_oauthTokenExpiry()
         if bool(get_cfg_details_oauthTokenExpiry()):
-            return datetime.datetime.now() < exp
+            return datetime.now() < exp
         else:
             return False
 
