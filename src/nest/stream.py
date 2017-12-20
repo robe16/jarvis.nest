@@ -39,6 +39,7 @@ def nest_stream(url):
             if bool(data):
                 broadcast_update(data)
             #
+        log_internal(True, 'Nest server update stream: {event}:{data}'.format(event=event_type, data=data), desc='pass')
         #
         # TODO - response to be added to a list for picking up by a broadcast capability
 
@@ -52,9 +53,9 @@ def broadcast_update(update):
         s.sendto(update, ('<broadcast>', jarvis_broadcastPort))
         #
         # TODO
-        #log_internal(True, '', desc='pass')
+        # log_internal(True, '', desc='pass')
         #
     except Exception as e:
         # TODO
-        #log_internal(True, '', desc='fail', exception=e)
+        # log_internal(True, '', desc='fail', exception=e)
         pass
