@@ -36,10 +36,10 @@ def nest_stream(url):
                 # Unknown event, no handler for it.
                 data = False
             #
-            if bool(data):
-                broadcast_update(data)
+            # if bool(data):
+            #     broadcast_update(data)
             #
-        log_internal(True, 'Nest server update stream: {event}:{data}'.format(event=event_type, data=data), desc='pass')
+            log_internal(True, 'Nest server update stream: {event}:{data}'.format(event=event_type, data=data), desc='pass')
         #
         # TODO - response to be added to a list for picking up by a broadcast capability
 
