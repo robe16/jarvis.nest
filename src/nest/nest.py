@@ -1,5 +1,5 @@
 from datetime import datetime
-import thread
+import threading
 import json
 import requests as requests
 
@@ -33,7 +33,8 @@ class Nest():
         self.sessionNest_REST = s
 
     def threadStream(self):
-        thread.start_new_thread(nest_stream, (self._get_url(),))
+        t = threading.Thread(target=nest_stream, args=(self._get_url(),))
+        t.start()
 
     def _tokencheck(self):
         # TODO
