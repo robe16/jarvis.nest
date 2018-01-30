@@ -121,10 +121,11 @@ def start_bottle(port_threads):
             #
             if not bool(r):
                 status = httpStatusFailure
+                args['result'] = logFail
             else:
                 status = httpStatusSuccess
+                args['result'] = logPass
             #
-            args['result'] = logPass
             args['http_response_code'] = status
             args['description'] = '-'
             log_inbound(**args)
@@ -161,10 +162,11 @@ def start_bottle(port_threads):
             #
             if not bool(r):
                 status = httpStatusFailure
+                args['result'] = logFail
             else:
                 status = httpStatusSuccess
+                args['result'] = logPass
             #
-            args['result'] = logPass
             args['http_response_code'] = status
             args['description'] = '-'
             log_inbound(**args)
@@ -197,10 +199,11 @@ def start_bottle(port_threads):
             #
             if not bool(r):
                 status = httpStatusFailure
+                args['result'] = logFail
             else:
                 status = httpStatusSuccess
+                args['result'] = logPass
             #
-            args['result'] = logPass
             args['http_response_code'] = status
             args['description'] = '-'
             log_inbound(**args)
@@ -237,10 +240,11 @@ def start_bottle(port_threads):
             #
             if not bool(r):
                 status = httpStatusFailure
+                args['result'] = logFail
             else:
                 status = httpStatusSuccess
+                args['result'] = logPass
             #
-            args['result'] = logPass
             args['http_response_code'] = status
             args['description'] = '-'
             log_inbound(**args)
@@ -273,10 +277,11 @@ def start_bottle(port_threads):
             #
             if not bool(r):
                 status = httpStatusFailure
+                args['result'] = logFail
             else:
                 status = httpStatusSuccess
+                args['result'] = logPass
             #
-            args['result'] = logPass
             args['http_response_code'] = status
             args['description'] = '-'
             log_inbound(**args)
@@ -309,10 +314,11 @@ def start_bottle(port_threads):
             #
             if not bool(r):
                 status = httpStatusFailure
+                args['result'] = logFail
             else:
                 status = httpStatusSuccess
+                args['result'] = logPass
             #
-            args['result'] = logPass
             args['http_response_code'] = status
             args['description'] = '-'
             log_inbound(**args)
