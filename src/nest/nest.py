@@ -7,7 +7,7 @@ from resources.lang.enGB.logs import *
 from parameters import temp_unit
 from log.log import log_outbound, log_internal
 from config.config import get_cfg_details_oauthToken, get_cfg_details_oauthTokenExpiry
-from stream import nest_stream
+from nest.stream import nest_stream
 
 
 class Nest():

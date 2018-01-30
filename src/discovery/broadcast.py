@@ -6,6 +6,7 @@ from parameters import broadcast_frequency
 from resources.lang.enGB.logs import *
 from resources.global_resources.broadcast import *
 from resources.global_resources.variables import serviceType
+from resources.global_resources.log_vars import logException
 
 
 def broadcast_service(service_id, self_port):
@@ -19,8 +20,8 @@ def broadcast_service(service_id, self_port):
                                           port=str(self_port))
         #
         while True:
-            s.sendto(msg, ('<broadcast>', jarvis_broadcastPort))
+            s.sendto(msg.encode(), ('<broadcast>', jarvis_broadcastPort))
             sleep(broadcast_frequency)
         #
     except Exception as e:
-        log_internal(True, logDesc_services_Broadcast, desc='fail', exception=e)
+        log_internal(logException, logDesc_services_Broadcast, exception=e)

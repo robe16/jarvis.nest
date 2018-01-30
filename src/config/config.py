@@ -103,3 +103,11 @@ def set_cfg_details_oauth(token, expiry, state):
     cfg['details']['oauth_tokenexpiry'] = expiry.strftime(oauthConfigTimeformat)
     cfg['details']['oauth_state'] = state
     write_config(cfg)
+
+
+def get_cfg_port_broadcast():
+    return get_config_json()['port']['broadcast']
+
+
+def get_cfg_port_listener():
+    return get_config_json()['port']['listener']

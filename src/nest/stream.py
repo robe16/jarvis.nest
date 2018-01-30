@@ -50,7 +50,7 @@ def broadcast_update(update):
         s.bind(('0.0.0.0', 0))
         s.setsockopt(SOL_SOCKET, SO_BROADCAST, 1)
         #
-        s.sendto(update, ('<broadcast>', jarvis_broadcastPort))
+        s.sendto(update.encode(), ('<broadcast>', jarvis_broadcastPort))
         #
         # TODO
         # log_internal(True, '', desc='pass')
