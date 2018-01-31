@@ -1,5 +1,5 @@
 requests
-sseclient
+sseclient-py
 bottle
 schedule
 jsonschema

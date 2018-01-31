@@ -3,6 +3,7 @@ import sseclient
 import requests
 from socket import socket, AF_INET, SOCK_DGRAM, SOL_SOCKET, SO_BROADCAST
 from config.config import get_cfg_details_oauthToken
+from resources.global_resources.log_vars import logPass, logException
 from resources.global_resources.broadcast import *
 from log.log import log_internal
 
@@ -12,7 +13,12 @@ def nest_stream(url):
     headers = {'Authorization': 'Bearer {authcode}'.format(authcode=get_cfg_details_oauthToken()),
                'Accept': 'text/event-stream'}
     #
-    with requests.get(url, headers=headers, stream=True) as r:
+    try:
+        r = requests.get(url, headers=headers, stream=True)
+        #
+        redirect_url = _check_redirect(r)
+        if bool(redirect_url):
+            r = requests.get(redirect_url, headers=headers, stream=True)
         #
         client = sseclient.SSEClient(r)
         for event in client.events():
@@ -39,9 +45,21 @@ def nest_stream(url):
             # if bool(data):
             #     broadcast_update(data)
             #
-            log_internal(True, 'Nest server update stream: {event}:{data}'.format(event=event_type, data=data), desc='pass')
-        #
-        # TODO - response to be added to a list for picking up by a broadcast capability
+            print(event.event)
+            print(data)
+            #
+            log_internal(logPass, 'Nest server update stream: {event}:{data}'.format(event=event_type, data=data))
+            #
+            # TODO - response to be added to a list for picking up by a broadcast capability
+    except Exception as e:
+        log_internal(logException, 'Nest server update stream', exception=e)
+
+
+def _check_redirect(r):
+    if len(r.history) > 0:
+        if r.history[0].is_redirect:
+            return r.url
+    return False
 
 
 def broadcast_update(update):

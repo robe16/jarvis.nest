@@ -23,14 +23,14 @@ class Nest():
         #
         self._tokencheck()
         self.createSessions()
+        #
+        self.threadStream()
 
     def createSessions(self):
         #
-        with requests.Session() as s:
-            s.headers.update({'Authorization': 'Bearer {authcode}'.format(authcode=get_cfg_details_oauthToken()),
-                              'Connection': 'close',
-                              'content-type': 'application/json'})
-        self.sessionNest_REST = s
+        self.sessionNest_REST.headers = {'Authorization': 'Bearer {authcode}'.format(authcode=get_cfg_details_oauthToken()),
+                                         'Connection': 'close',
+                                         'content-type': 'application/json'}
 
     def threadStream(self):
         t = threading.Thread(target=nest_stream, args=(self._get_url(),))
@@ -55,7 +55,9 @@ class Nest():
     def _check_redirect(self, r):
         if len(r.history) > 0:
             if r.history[0].is_redirect:
-                self._set_redirect_url = r.url
+                self._redirect_url = r.url
+                return True
+        return False
 
     def _read_nest_json(self, uri=''):
         #
@@ -63,7 +65,8 @@ class Nest():
         #
         r = self.sessionNest_REST.get('{url}{uri}'.format(url=url, uri=uri))
         #
-        self._check_redirect(r)
+        if self._check_redirect(r):
+            return self._read_nest_json(uri)
         #
         if str(r.status_code).startswith('4'):
             return False
@@ -78,10 +81,11 @@ class Nest():
         url = self._get_url()
         uri = '{model}/{device}/{id}'.format(model=model, device=device, id=id)
         #
-        r = self.sessionNest_REST.put('{url}{uri}'.format(url=url, uri=uri),
+        r = self.sessionNest_REST.put('{url}{uri}'.format(url=self._set_redirect_url, uri=uri),
                                       data=json.dumps(json_cmd))
         #
-        self._check_redirect(r)
+        if self._check_redirect(r):
+            return self._send_nest_json(json_cmd, model, device, id)
         #
         if str(r.status_code).startswith('4'):
             return False
