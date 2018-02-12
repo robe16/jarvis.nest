@@ -1,21 +1,22 @@
 from datetime import datetime
 import threading
 import json
+import sseclient
 import requests as requests
 
+from discovery.broadcast import broadcast_msg
+from common_functions.redirect_url import check_redirect
+from resources.global_resources.nest_uris import *
+from resources.global_resources.log_vars import logPass, logFail, logException
 from resources.lang.enGB.logs import *
-from parameters import temp_unit
 from log.log import log_outbound, log_internal
 from config.config import get_cfg_details_oauthToken, get_cfg_details_oauthTokenExpiry
-from nest.stream import nest_stream
+from nest.data_stripping import *
 
 
 class Nest():
 
     sessionNest_REST = requests.Session()
-    sessionNest_RESTstream = requests.Session()
-
-    nesturl_api = 'https://developer-api.nest.com/'
 
     def __init__(self):
         #
@@ -24,6 +25,11 @@ class Nest():
         self._tokencheck()
         self.createSessions()
         #
+        self._thermostat = {}
+        self._smoke = {}
+        self._cameras = {}
+        #
+        self._createCache()
         self.threadStream()
 
     def createSessions(self):
@@ -33,12 +39,11 @@ class Nest():
                                          'content-type': 'application/json'}
 
     def threadStream(self):
-        t = threading.Thread(target=nest_stream, args=(self._get_url(),))
+        t = threading.Thread(target=self.nest_stream)
         t.start()
 
     def _tokencheck(self):
-        # TODO
-        # log_general('Checking Auth Token', dvc_id=self.dvc_id())
+        log_internal(logPass, logDescNest_checkingAuth)
         if self._checkToken():
             return True
         else:
@@ -52,91 +57,157 @@ class Nest():
         else:
             return False
 
-    def _check_redirect(self, r):
-        if len(r.history) > 0:
-            if r.history[0].is_redirect:
-                self._redirect_url = r.url
-                return True
-        return False
-
     def _read_nest_json(self, uri=''):
         #
-        url = self._get_url()
+        r = self.sessionNest_REST.get('{url}{uri}'.format(url=self._get_url(), uri=uri))
         #
-        r = self.sessionNest_REST.get('{url}{uri}'.format(url=url, uri=uri))
-        #
-        if self._check_redirect(r):
+        redirect = check_redirect(r)
+        if bool(redirect):
+            self._redirect_url = redirect.replace(uri, '')
             return self._read_nest_json(uri)
         #
-        if str(r.status_code).startswith('4'):
-            return False
+        r_pass = True if r.status_code == requests.codes.ok else False
+        result = logPass if r_pass else logFail
         #
-        return r.json()
+        log_outbound(result,
+                     self._get_url(), '', 'GET', uri, '-', '-',
+                     r.status_code)
+        #
+        if r_pass:
+            return r.json()
+        else:
+            return False
 
     def _send_nest_json(self, json_cmd, model, device, id, retry=0):
         #
         if retry >= 2:
             return False
         #
-        url = self._get_url()
         uri = '{model}/{device}/{id}'.format(model=model, device=device, id=id)
         #
-        r = self.sessionNest_REST.put('{url}{uri}'.format(url=self._set_redirect_url, uri=uri),
+        r = self.sessionNest_REST.put('{url}{uri}'.format(url=self._get_url(), uri=uri),
                                       data=json.dumps(json_cmd))
         #
-        if self._check_redirect(r):
+        redirect = check_redirect(r)
+        if bool(redirect):
+            self._redirect_url = redirect.replace(uri, '')
             return self._send_nest_json(json_cmd, model, device, id)
         #
-        if str(r.status_code).startswith('4'):
-            return False
+        r_pass = True if r.status_code == requests.codes.ok else False
+        result = logPass if r_pass else logFail
         #
-        return r.json()
+        log_outbound(result,
+                     self._get_url(), '', 'PUT', uri, '-', json_cmd,
+                     r.status_code)
+        #
+        if r_pass:
+            return r.json()
+        else:
+            return False
 
     def _get_url(self):
         #
         if self._redirect_url != '':
             return self._redirect_url
         else:
-            return self.nesturl_api
+            return url_nest
+
+    def nest_stream(self):
+        #
+        headers = {'Authorization': 'Bearer {authcode}'.format(authcode=get_cfg_details_oauthToken()),
+                   'Accept': 'text/event-stream'}
+        #
+        try:
+            #
+            r = requests.get(self._get_url() + uri_nest_devices, headers=headers, stream=True)
+            #
+            redirect_url = check_redirect(r)
+            if bool(redirect_url):
+                self._redirect_url = redirect_url.replace(uri_nest_devices, '')
+                r = requests.get(uri_nest_devices, headers=headers, stream=True)
+            #
+            log_internal(logPass, logDescNest_streamStart)
+            #
+            client = sseclient.SSEClient(r)
+            for event in client.events():
+                event_type = event.event
+                if event_type == 'open':  # not always received here
+                    # The event stream has been opened
+                    data = False
+                elif event_type == 'put':
+                    # The data has changed (or initial data sent)
+                    data = json.loads(event.data)
+                elif event_type == 'keep-alive':
+                    # No data updates. Receiving an HTTP header to keep the connection open.
+                    data = False
+                elif event_type == 'auth_revoked':
+                    # The API authorization has been revoked.
+                    raise Exception('API authorization has been revoked')
+                elif event_type == 'error':
+                    # Error occurred, such as connection closed.
+                    data = json.loads(event.data)
+                else:
+                    # Unknown event, no handler for it.
+                    data = False
+                #
+                # TODO - response to be added to a list for picking up by a broadcast capability
+                # if bool(data):
+                #     broadcast_msg(data)
+                print(event_type)
+                print(data)
+                #
+                log_internal(logPass, logDescNest_streamUpdate)
+                #
+        except Exception as e:
+            log_internal(logException, logDescNest_streamError, exception=e)
+
+    def _createCache(self):
+        json = self.getDevices()
+        self._thermostat = json['thermostats']
+        self._smoke = json['smoke_co_alarms']
+        self._cameras = json['cameras']
 
     def getAll(self):
-        # TODO - neaten/strip returned data
         data = self._read_nest_json()
-        del data['metadata']
+        data = strip_data(data)
         return data
 
     def getStructures(self):
-        #
-        data = self._read_nest_json('structures/')
-        # TODO - neaten/strip returned data
-        #
+        data = self._read_nest_json(uri_nest_structures)
+        data = strip_structures(data)
         return data
 
     def getStructure(self, structure_id):
-        #
-        data = self._read_nest_json('devices/{structure_id}'.format(structure_id=structure_id))
-        # TODO - neaten/strip returned data
-        #
+        data = self._read_nest_json(uri_nest_devices_structure.format(structure_id=structure_id))
+        data = strip_structure(data)
         return data
 
     def getDevices(self):
-        #
-        data = self._read_nest_json('devices/')
-        # TODO - neaten/strip returned data
-        #
+        data = self._read_nest_json(uri_nest_devices)
+        data = strip_devices(data)
         return data
 
     def getDevicesType(self, device_type):
+        data = self._read_nest_json(uri_nest_devices_type.format(device_type=device_type))
         #
-        data = self._read_nest_json('devices/{device_type}'.format(device_type=device_type))
-        # TODO - neaten/strip returned data
+        if device_type == 'thermostats':
+            data = strip_thermostats(data)
+        elif device_type == 'smoke_co_alarms':
+            data = strip_smokes(data)
+        elif device_type == 'cameras':
+            data = strip_cameras(data)
         #
         return data
 
     def getDevice(self, device_type, device_id):
+        data = self._read_nest_json(uri_nest_device_specific.format(device_type=device_type,
+                                                                    device_id=device_id))
         #
-        data = self._read_nest_json('devices/{device_type}/{device_id}'.format(device_type=device_type,
-                                                                               device_id=device_id))
-        # TODO - neaten/strip returned data
+        if device_type == 'thermostats':
+            data = strip_thermostats(data)
+        elif device_type == 'smoke_co_alarms':
+            data = strip_smokes(data)
+        elif device_type == 'cameras':
+            data = strip_cameras(data)
         #
         return data
