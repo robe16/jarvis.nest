@@ -8,7 +8,7 @@ def strip_data(json_data):
 
 
 def strip_structures(json_data):
-    for k, v in json_data:
+    for k in json_data:
         json_data[k] = strip_structure(json_data[k])
     return json_data
 

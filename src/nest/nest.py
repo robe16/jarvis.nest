@@ -25,6 +25,7 @@ class Nest():
         self._tokencheck()
         self.createSessions()
         #
+        self._structures = {}
         self._thermostat = {}
         self._smoke = {}
         self._cameras = {}
@@ -119,7 +120,7 @@ class Nest():
         #
         try:
             #
-            r = requests.get(self._get_url() + uri_nest_devices, headers=headers, stream=True)
+            r = requests.get(self._get_url(), headers=headers, stream=True)
             #
             redirect_url = check_redirect(r)
             if bool(redirect_url):
@@ -144,16 +145,19 @@ class Nest():
                     logDesc = []
                     #
                     json_data = json.loads(event.data)
-                    json_data = strip_devices(json_data['data'])
+                    json_data = strip_data(json_data['data'])
                     #
-                    if self._thermostat != json_data['thermostats']:
-                        self._thermostat = json_data['thermostats']
+                    if self._structures != json_data['structures']:
+                        self._structures = json_data['structures']
+                        logDesc.append('structures')
+                    if self._thermostat != json_data['devices']['thermostats']:
+                        self._thermostat = json_data['devices']['thermostats']
                         logDesc.append('thermostats')
-                    if self._smoke != json_data['smoke_co_alarms']:
-                        self._smoke = json_data['smoke_co_alarms']
+                    if self._smoke != json_data['devices']['smoke_co_alarms']:
+                        self._smoke = json_data['devices']['smoke_co_alarms']
                         logDesc.append('smoke_co_alarms')
-                    if self._cameras != json_data['cameras']:
-                        self._cameras = json_data['cameras']
+                    if self._cameras != json_data['devices']['cameras']:
+                        self._cameras = json_data['devices']['cameras']
                         logDesc.append('cameras')
                     #
                     log_internal(logPass, logDescNest_streamUpdate, description=logDesc)
@@ -165,10 +169,11 @@ class Nest():
             log_internal(logException, logDescNest_streamError, exception=e)
 
     def _createCache(self):
-        json_data = self.getDevices()
-        self._thermostat = json_data['thermostats']
-        self._smoke = json_data['smoke_co_alarms']
-        self._cameras = json_data['cameras']
+        json_data = self.getAll()
+        self._structures = json_data['structures']
+        self._thermostat = json_data['devices']['thermostats']
+        self._smoke = json_data['devices']['smoke_co_alarms']
+        self._cameras = json_data['devices']['cameras']
 
     def getAll(self):
         data = self._read_nest_json()
