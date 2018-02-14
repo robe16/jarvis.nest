@@ -131,41 +131,44 @@ class Nest():
             client = sseclient.SSEClient(r)
             for event in client.events():
                 event_type = event.event
-                if event_type == 'open':  # not always received here
-                    # The event stream has been opened
-                    data = False
-                elif event_type == 'put':
-                    # The data has changed (or initial data sent)
-                    data = json.loads(event.data)
-                elif event_type == 'keep-alive':
-                    # No data updates. Receiving an HTTP header to keep the connection open.
-                    data = False
+                #
+                # Different event types:
+                # 'open' - The event stream has been opened (not always received here)
+                # 'put' - The data has changed (or initial data sent)
+                # 'keep-alive' - No data updates. Receiving an HTTP header to keep the connection open
+                # 'auth_revoked' - The API authorization has been revoked
+                # 'error' - Error occurred, such as connection closed.
+                #
+                if event_type == 'put':
+                    #
+                    logDesc = []
+                    #
+                    json_data = json.loads(event.data)
+                    json_data = strip_devices(json_data['data'])
+                    #
+                    if self._thermostat != json_data['thermostats']:
+                        self._thermostat = json_data['thermostats']
+                        logDesc.append('thermostats')
+                    if self._smoke != json_data['smoke_co_alarms']:
+                        self._smoke = json_data['smoke_co_alarms']
+                        logDesc.append('smoke_co_alarms')
+                    if self._cameras != json_data['cameras']:
+                        self._cameras = json_data['cameras']
+                        logDesc.append('cameras')
+                    #
+                    log_internal(logPass, logDescNest_streamUpdate, description=logDesc)
+                    #
                 elif event_type == 'auth_revoked':
-                    # The API authorization has been revoked.
                     raise Exception('API authorization has been revoked')
-                elif event_type == 'error':
-                    # Error occurred, such as connection closed.
-                    data = json.loads(event.data)
-                else:
-                    # Unknown event, no handler for it.
-                    data = False
-                #
-                # TODO - response to be added to a list for picking up by a broadcast capability
-                # if bool(data):
-                #     broadcast_msg(data)
-                print(event_type)
-                print(data)
-                #
-                log_internal(logPass, logDescNest_streamUpdate)
                 #
         except Exception as e:
             log_internal(logException, logDescNest_streamError, exception=e)
 
     def _createCache(self):
-        json = self.getDevices()
-        self._thermostat = json['thermostats']
-        self._smoke = json['smoke_co_alarms']
-        self._cameras = json['cameras']
+        json_data = self.getDevices()
+        self._thermostat = json_data['thermostats']
+        self._smoke = json_data['smoke_co_alarms']
+        self._cameras = json_data['cameras']
 
     def getAll(self):
         data = self._read_nest_json()
