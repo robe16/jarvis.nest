@@ -26,8 +26,8 @@ class Nest():
         self.createSessions()
         #
         self._structures = {}
-        self._thermostat = {}
-        self._smoke = {}
+        self._thermostats = {}
+        self._smokes = {}
         self._cameras = {}
         #
         self._createCache()
@@ -150,11 +150,11 @@ class Nest():
                     if self._structures != json_data['structures']:
                         self._structures = json_data['structures']
                         logDesc.append('structures')
-                    if self._thermostat != json_data['devices']['thermostats']:
-                        self._thermostat = json_data['devices']['thermostats']
+                    if self._thermostats != json_data['devices']['thermostats']:
+                        self._thermostats = json_data['devices']['thermostats']
                         logDesc.append('thermostats')
-                    if self._smoke != json_data['devices']['smoke_co_alarms']:
-                        self._smoke = json_data['devices']['smoke_co_alarms']
+                    if self._smokes != json_data['devices']['smoke_co_alarms']:
+                        self._smokes = json_data['devices']['smoke_co_alarms']
                         logDesc.append('smoke_co_alarms')
                     if self._cameras != json_data['devices']['cameras']:
                         self._cameras = json_data['devices']['cameras']
@@ -169,33 +169,33 @@ class Nest():
             log_internal(logException, logDescNest_streamError, exception=e)
 
     def _createCache(self):
-        json_data = self.getAll()
+        json_data = self._getAll()
         self._structures = json_data['structures']
-        self._thermostat = json_data['devices']['thermostats']
-        self._smoke = json_data['devices']['smoke_co_alarms']
+        self._thermostats = json_data['devices']['thermostats']
+        self._smokes = json_data['devices']['smoke_co_alarms']
         self._cameras = json_data['devices']['cameras']
 
-    def getAll(self):
+    def _getAll(self):
         data = self._read_nest_json()
         data = strip_data(data)
         return data
 
-    def getStructures(self):
+    def _getStructures(self):
         data = self._read_nest_json(uri_nest_structures)
         data = strip_structures(data)
         return data
 
-    def getStructure(self, structure_id):
+    def _getStructure(self, structure_id):
         data = self._read_nest_json(uri_nest_devices_structure.format(structure_id=structure_id))
         data = strip_structure(data)
         return data
 
-    def getDevices(self):
+    def _getDevices(self):
         data = self._read_nest_json(uri_nest_devices)
         data = strip_devices(data)
         return data
 
-    def getDevicesType(self, device_type):
+    def _getDevicesType(self, device_type):
         data = self._read_nest_json(uri_nest_devices_type.format(device_type=device_type))
         #
         if device_type == 'thermostats':
@@ -207,7 +207,7 @@ class Nest():
         #
         return data
 
-    def getDevice(self, device_type, device_id):
+    def _getDevice(self, device_type, device_id):
         data = self._read_nest_json(uri_nest_device_specific.format(device_type=device_type,
                                                                     device_id=device_id))
         #
@@ -219,3 +219,58 @@ class Nest():
             data = strip_cameras(data)
         #
         return data
+
+    def getAll(self):
+        return {'structures': self._structures,
+                'thermostats': self._thermostats,
+                'smoke_co_alarms': self._smokes,
+                'cameras': self._cameras}
+
+    def getStructures(self):
+        return {'structures': self._structures}
+
+    def getStructure(self, structure_id):
+        return {'structures': {structure_id: self._structures[structure_id]}}
+
+    def getDevices(self):
+        return {'thermostats': self._thermostats,
+                'smoke_co_alarms': self._smokes,
+                'cameras': self._cameras}
+
+    def getDevicesType(self, device_type):
+        if device_type == 'thermostats':
+            return self.getThermostats()
+        elif device_type == 'smoke_co_alarms':
+            return self.getSmokes()
+        elif device_type == 'cameras':
+            return self.getCameras()
+        else:
+            return False
+
+    def getThermostats(self):
+        return {'thermostats': self._thermostats}
+
+    def getSmokes(self):
+        return {'smoke_co_alarms': self._smokes}
+
+    def getCameras(self):
+        return {'cameras': self._cameras}
+
+    def getDevice(self, device_type, device_id):
+        if device_type == 'thermostats':
+            return self.getThermostat(device_id)
+        elif device_type == 'smoke_co_alarms':
+            return self.getSmoke(device_id)
+        elif device_type == 'cameras':
+            return self.getCamera(device_id)
+        else:
+            return False
+
+    def getThermostat(self, device_id):
+        return {'thermostats': {device_id: self._thermostats[device_id]}}
+
+    def getSmoke(self, device_id):
+        return {'smoke_co_alarms': {device_id: self._smokes[device_id]}}
+
+    def getCamera(self, device_id):
+        return {'cameras': {device_id: self._cameras[device_id]}}
