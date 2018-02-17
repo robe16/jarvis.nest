@@ -1,5 +1,16 @@
 {
   "type": "object",
-  "target_temperature_c": {"type" : "float"},
-  "target_temperature_f": {"type" : "integer"}
+  "device_type": {"type" : "string"},
+  "device_id": {"type" : "string"},
+  "label": {"type" : "string"},
+  "temperature_scale": {"type": "string", "enum": ["F", "C"]},
+  "target_temperature_c": {"type" : "float", "minimum": 9, "maximum": 32},
+  "target_temperature_f": {"type" : "integer", "minimum": 50, "maximum": 90},
+  "target_temperature_high_c": {"type" : "float"},
+  "target_temperature_high_f": {"type" : "integer"},
+  "target_temperature_low_c": {"type" : "float"},
+  "target_temperature_low_f": {"type" : "integer"},
+  "hvac_mode": {"type": "string", "enum": ["heat", "cool", "heat-cool", "eco", "off"]},
+  "fan_timer_active": {"type" : "boolean"},
+  "fan_timer_duration": {"type" : "integer", "enum": [15, 30, 45, 60, 120, 240, 480, 720]}
 }
