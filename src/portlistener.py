@@ -354,7 +354,7 @@ def start_bottle(port_threads):
             #
             command = request.json
             #
-            if device_type == 'thermostats':
+            if device_type == 'thermostat':
                 if validate_thermostat(command):
                     status = httpStatusSuccess if _device.setThermostat(device_id, command) else httpStatusFailure
                 else:
