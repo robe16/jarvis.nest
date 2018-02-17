@@ -104,6 +104,31 @@ class Nest():
         else:
             return False
 
+    def _send_nest_value(self, value, uri, retry=0):
+        #
+        if retry >= 2:
+            return False
+        #
+        r = self.sessionNest_REST.put('{url}{uri}'.format(url=self._get_url(), uri=uri),
+                                      data=str(value))
+        #
+        redirect = check_redirect(r)
+        if bool(redirect):
+            self._redirect_url = redirect.replace(uri, '')
+            return self._send_nest_value(value, uri)
+        #
+        r_pass = True if r.status_code == requests.codes.ok else False
+        result = logPass if r_pass else logFail
+        #
+        log_outbound(result,
+                     self._get_url(), '', 'PUT', uri, '-', value,
+                     r.status_code)
+        #
+        if r_pass:
+            return r.json()
+        else:
+            return False
+
     def _get_url(self):
         #
         if self._redirect_url != '':
@@ -275,18 +300,27 @@ class Nest():
 
     def setThermostat(self, device_id, command):
         #
-        updateJson = {}
-        #
-        try:
-            updateJson['target_temperature_c'] = float(command['target_temperature_c'])
-        except:
-            pass
-        #
-        try:
-            updateJson['target_temperature_f'] = int(command['target_temperature_f'])
-        except:
-            pass
-        #
-        return self._send_nest_json(updateJson,
-                                    uri_nest_device_specific.format(device_type='thermostat',
-                                                                    device_id=device_id))
+        if len(command) == 1:
+            # if single field, send to 'dedicated' Nest API
+            #
+            for k in command:
+                key = k
+                value = command[k]
+            #
+            return self._send_nest_value(value,
+                                         uri_nest_device_specific_value.format(device_type='thermostats',
+                                                                               device_id=device_id,
+                                                                               field=key))
+            #
+        else:
+            # if multiple fields, send as a 'batch' request to Nest API
+            #
+            for k in command:
+                if k.endswith('_c'):
+                    command[k] = float(command[k])
+                elif k.endswith('_f'):
+                    command[k] = int(command[k])
+            #
+            return self._send_nest_json(command,
+                                        uri_nest_device_specific.format(device_type='thermostats',
+                                                                        device_id=device_id))
