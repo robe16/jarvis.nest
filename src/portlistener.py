@@ -12,6 +12,7 @@ from resources.global_resources.variables import *
 from resources.global_resources.log_vars import logPass, logFail, logException
 from resources.global_resources.exposed_apis import *
 from nest.nest import Nest
+from validation.validation import validate_thermostat
 
 
 def start_bottle(port_threads):
@@ -327,6 +328,47 @@ def start_bottle(port_threads):
                 return HTTPResponse(status=status)
             else:
                 return HTTPResponse(body=r, status=status)
+            #
+        except Exception as e:
+            #
+            status = httpStatusServererror
+            #
+            args['result'] = logException
+            args['http_response_code'] = status
+            args['description'] = '-'
+            args['exception'] = e
+            log_inbound(**args)
+            #
+            raise HTTPError(status)
+
+    ################################################################################################
+    # Send updates to device
+    ################################################################################################
+
+    @post(uri_get_device_specific)
+    def update_devices_specific(device_type, device_id):
+        #
+        args = _get_log_args(request)
+        #
+        try:
+            #
+            command = request.json
+            #
+            if device_type == 'thermostat':
+                if validate_thermostat(command):
+                    status = httpStatusSuccess if _device.setThermostat(device_id, command) else httpStatusFailure
+                else:
+                    status = httpStatusBadrequest
+            else:
+                status = httpStatusBadrequest
+            #
+            args['result'] = logPass if status == httpStatusSuccess else logFail
+            #
+            args['http_response_code'] = status
+            args['description'] = '-'
+            log_inbound(**args)
+            #
+            return HTTPResponse(status=status)
             #
         except Exception as e:
             #

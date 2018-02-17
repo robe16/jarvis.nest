@@ -12,7 +12,7 @@ def _validate_schema(inpt, schema):
     try:
         validate(inpt, schema)
         return True
-    except:
+    except Exception as e:
         return False
 
 

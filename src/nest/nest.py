@@ -79,12 +79,10 @@ class Nest():
         else:
             return False
 
-    def _send_nest_json(self, json_cmd, model, device, id, retry=0):
+    def _send_nest_json(self, json_cmd, uri, retry=0):
         #
         if retry >= 2:
             return False
-        #
-        uri = '{model}/{device}/{id}'.format(model=model, device=device, id=id)
         #
         r = self.sessionNest_REST.put('{url}{uri}'.format(url=self._get_url(), uri=uri),
                                       data=json.dumps(json_cmd))
@@ -92,7 +90,7 @@ class Nest():
         redirect = check_redirect(r)
         if bool(redirect):
             self._redirect_url = redirect.replace(uri, '')
-            return self._send_nest_json(json_cmd, model, device, id)
+            return self._send_nest_json(json_cmd, uri)
         #
         r_pass = True if r.status_code == requests.codes.ok else False
         result = logPass if r_pass else logFail
@@ -274,3 +272,15 @@ class Nest():
 
     def getCamera(self, device_id):
         return {'cameras': {device_id: self._cameras[device_id]}}
+
+    def setThermostat(self, device_id, command):
+        #
+        updateJson = {}
+        #
+        _temp_unit = self._thermostats[device_id]['temperature_scale'].lower()
+        #
+        updateJson['target_temperature_{unit}'.format(unit=_temp_unit)] = command['temperature_target']
+        #
+        return self._send_nest_json(updateJson,
+                                    uri_nest_device_specific.format(device_type='thermostat',
+                                                                    device_id=device_id))

@@ -1,1 +1,5 @@
-//TODO
+{
+  "type": "object",
+  "temperature_target": {"type" : "float"},
+  "required": []
+}
