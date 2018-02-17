@@ -277,9 +277,15 @@ class Nest():
         #
         updateJson = {}
         #
-        _temp_unit = self._thermostats[device_id]['temperature_scale'].lower()
+        try:
+            updateJson['target_temperature_c'] = float(command['target_temperature_c'])
+        except:
+            pass
         #
-        updateJson['target_temperature_{unit}'.format(unit=_temp_unit)] = command['temperature_target']
+        try:
+            updateJson['target_temperature_f'] = int(command['target_temperature_f'])
+        except:
+            pass
         #
         return self._send_nest_json(updateJson,
                                     uri_nest_device_specific.format(device_type='thermostat',

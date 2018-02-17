@@ -1,3 +1,4 @@
 {
-  "temperature_target": 0
+  "target_temperature_c": 0,
+  "target_temperature_f": 50
 }

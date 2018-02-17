@@ -1,5 +1,6 @@
 {
   "type": "object",
-  "temperature_target": {"type" : "float"},
+  "target_temperature_c": {"type" : "float"},
+  "target_temperature_f": {"type" : "integer"},
   "required": []
 }
