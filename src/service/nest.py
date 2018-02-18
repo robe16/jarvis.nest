@@ -1,17 +1,17 @@
-from datetime import datetime
-import threading
 import json
-import sseclient
-import requests as requests
+import threading
+from datetime import datetime
 
-from discovery.broadcast import broadcast_msg
+import requests as requests
+import sseclient
+
 from common_functions.redirect_url import check_redirect
-from resources.global_resources.nest_uris import *
-from resources.global_resources.log_vars import logPass, logFail, logException
-from resources.lang.enGB.logs import *
-from log.log import log_outbound, log_internal
 from config.config import get_cfg_details_oauthToken, get_cfg_details_oauthTokenExpiry
+from log.log import log_outbound, log_internal
 from nest.data_stripping import *
+from resources.global_resources.log_vars import logPass, logFail, logException
+from resources.global_resources.nest_uris import *
+from resources.lang.enGB.logs import *
 
 
 class Nest():
