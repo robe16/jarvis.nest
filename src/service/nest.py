@@ -8,7 +8,7 @@ import sseclient
 from common_functions.redirect_url import check_redirect
 from config.config import get_cfg_details_oauthToken, get_cfg_details_oauthTokenExpiry
 from log.log import log_outbound, log_internal
-from nest.data_stripping import *
+from service.data_stripping import *
 from resources.global_resources.log_vars import logPass, logFail, logException
 from resources.global_resources.nest_uris import *
 from resources.lang.enGB.logs import *
