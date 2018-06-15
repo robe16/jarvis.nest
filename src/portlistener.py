@@ -1,19 +1,22 @@
 import threading
 
-from bottle import HTTPError
 from bottle import get, post
-from bottle import request, run, HTTPResponse
+from bottle import request, run
 
-from common_functions.query_to_string import convert_query_to_string
 from config.config import get_cfg_port_listener
-from config.config import get_cfg_serviceid, get_cfg_name_long, get_cfg_name_short, get_cfg_groups, get_cfg_subservices
-from log.log import log_inbound, log_internal
+from log.log import log_internal
 from service.nest import Nest
-from resources.global_resources.exposed_apis import *
-from resources.global_resources.log_vars import logPass, logFail, logException
-from resources.global_resources.variables import *
+from resources.global_resources.log_vars import logPass
 from resources.lang.enGB.logs import *
-from validation.validation import validate_thermostat
+
+from apis.uri_config import get_config
+from apis.uri_get_all import get_all
+from apis.uri_get_structures import get_structures
+from apis.uri_get_structure_specific import get_structure_specific
+from apis.uri_get_devices import get_devices
+from apis.uri_get_devices_type import get_devices_type
+from apis.uri_get_device_specific import get_device_specific
+from apis.uri_post_device_specific import post_device_specific
 
 
 def start_bottle(port_threads):
@@ -22,395 +25,45 @@ def start_bottle(port_threads):
     # Create device
     ################################################################################################
 
-    _device = Nest()
+    _nest = Nest()
 
     log_internal(logPass, logDescDeviceObjectCreation, description='success')
 
     ################################################################################################
-    # Enable cross domain scripting
+    # APIs
     ################################################################################################
 
-    def enable_cors(response):
-        response.headers['Access-Control-Allow-Origin'] = '*'
-        response.headers['Access-Control-Allow-Methods'] = 'GET'
-        response.headers['Access-Control-Allow-Headers'] = service_header_clientid_label
-        return response
+    @get('/config')
+    def api_get_config():
+        return get_config(request)
 
-    ################################################################################################
-    # Log arguments
-    ################################################################################################
+    @get('/all')
+    def api_get_all():
+        return get_all(request, _nest)
 
-    def _get_log_args(request):
-        #
-        urlparts = request.urlparts
-        #
-        try:
-            client_ip = request.headers['X-Forwarded-For']
-        except:
-            client_ip = request['REMOTE_ADDR']
-        #
-        try:
-            server_ip = request.headers['X-Real-IP']
-        except:
-            server_ip = urlparts.hostname
-        #
-        try:
-            client_user = request.headers[service_header_clientid_label]
-        except:
-            client_user = request['REMOTE_ADDR']
-        #
-        server_request_query = convert_query_to_string(request.query) if request.query_string else '-'
-        server_request_body = request.body.read() if request.body.read()!='' else '-'
-        #
-        return {'client_ip': client_ip,
-                'client_user': client_user,
-                'server_ip': server_ip,
-                'server_thread_port': urlparts.port,
-                'server_method': request.method,
-                'server_request_uri': urlparts.path,
-                'server_request_query': server_request_query,
-                'server_request_body': server_request_body}
+    @get('/structures')
+    def api_get_structures():
+        return get_structures(_nest)
 
-    ################################################################################################
-    # Service info & Groups
-    ################################################################################################
+    @get('/structure/<structure_id>')
+    def api_get_structure_specific(structure_id):
+        return get_structure_specific(request, structure_id)
 
-    @get(uri_config)
-    def get_config():
-        #
-        args = _get_log_args(request)
-        #
-        try:
-            #
-            data = {'service_id': get_cfg_serviceid(),
-                    'name_long': get_cfg_name_long(),
-                    'name_short': get_cfg_name_short(),
-                    'subservices': get_cfg_subservices(),
-                    'groups': get_cfg_groups()}
-            #
-            status = httpStatusSuccess
-            #
-            args['result'] = logPass
-            args['http_response_code'] = status
-            args['description'] = '-'
-            log_inbound(**args)
-            #
-            return HTTPResponse(body=data, status=status)
-            #
-        except Exception as e:
-            #
-            status = httpStatusServererror
-            #
-            args['result'] = logException
-            args['http_response_code'] = status
-            args['description'] = '-'
-            args['exception'] = e
-            log_inbound(**args)
-            #
-            raise HTTPError(status)
+    @get('/devices')
+    def api_get_devices():
+        return get_devices(request, _nest)
 
-    ################################################################################################
-    # All data
-    ################################################################################################
+    @get('/devices/<device_type>')
+    def api_get_devices_type(device_type):
+        return get_devices_type(request, _nest, device_type)
 
-    @get(uri_get_all)
-    def get_get_all():
-        #
-        args = _get_log_args(request)
-        #
-        try:
-            #
-            r = _device.getAll()
-            #
-            if not bool(r):
-                status = httpStatusFailure
-                args['result'] = logFail
-            else:
-                status = httpStatusSuccess
-                args['result'] = logPass
-            #
-            args['http_response_code'] = status
-            args['description'] = '-'
-            log_inbound(**args)
-            #
-            response = HTTPResponse()
-            response.status = status
-            enable_cors(response)
-            #
-            if not isinstance(r, bool):
-                response.body = r
-            #
-            return response
-            #
-        except Exception as e:
-            #
-            status = httpStatusServererror
-            #
-            args['result'] = logException
-            args['http_response_code'] = status
-            args['description'] = '-'
-            args['exception'] = e
-            log_inbound(**args)
-            #
-            raise HTTPError(status)
+    @get('/devices/<device_type>/<device_id>')
+    def api_get_device_specific(device_type, device_id):
+        return get_device_specific(request, _nest, device_type, device_id)
 
-    ################################################################################################
-    # Structures
-    ################################################################################################
-
-    @get(uri_get_structures)
-    def get_structures():
-        #
-        args = _get_log_args(request)
-        #
-        try:
-            #
-            r = _device.getStructures()
-            #
-            if not bool(r):
-                status = httpStatusFailure
-                args['result'] = logFail
-            else:
-                status = httpStatusSuccess
-                args['result'] = logPass
-            #
-            args['http_response_code'] = status
-            args['description'] = '-'
-            log_inbound(**args)
-            #
-            response = HTTPResponse()
-            response.status = status
-            enable_cors(response)
-            #
-            if not isinstance(r, bool):
-                response.body = r
-            #
-            return response
-            #
-        except Exception as e:
-            #
-            status = httpStatusServererror
-            #
-            args['result'] = logException
-            args['http_response_code'] = status
-            args['description'] = '-'
-            args['exception'] = e
-            log_inbound(**args)
-            #
-            raise HTTPError(status)
-
-    @get(uri_get_structure_specific)
-    def get_structure_specific(structure_id):
-        #
-        args = _get_log_args(request)
-        #
-        try:
-            #
-            r = _device.getStructure(structure_id)
-            #
-            if not bool(r):
-                status = httpStatusFailure
-                args['result'] = logFail
-            else:
-                status = httpStatusSuccess
-                args['result'] = logPass
-            #
-            args['http_response_code'] = status
-            args['description'] = '-'
-            log_inbound(**args)
-            #
-            response = HTTPResponse()
-            response.status = status
-            enable_cors(response)
-            #
-            if not isinstance(r, bool):
-                response.body = r
-            #
-            return response
-            #
-        except Exception as e:
-            #
-            status = httpStatusServererror
-            #
-            args['result'] = logException
-            args['http_response_code'] = status
-            args['description'] = '-'
-            args['exception'] = e
-            log_inbound(**args)
-            #
-            raise HTTPError(status)
-
-    ################################################################################################
-    # Devices
-    ################################################################################################
-
-    @get(uri_get_devices)
-    def get_devices():
-        #
-        args = _get_log_args(request)
-        #
-        try:
-            #
-            r = _device.getDevices()
-            #
-            if not bool(r):
-                status = httpStatusFailure
-                args['result'] = logFail
-            else:
-                status = httpStatusSuccess
-                args['result'] = logPass
-            #
-            args['http_response_code'] = status
-            args['description'] = '-'
-            log_inbound(**args)
-            #
-            response = HTTPResponse()
-            response.status = status
-            enable_cors(response)
-            #
-            if not isinstance(r, bool):
-                response.body = r
-            #
-            return response
-            #
-        except Exception as e:
-            #
-            status = httpStatusServererror
-            #
-            args['result'] = logException
-            args['http_response_code'] = status
-            args['description'] = '-'
-            args['exception'] = e
-            log_inbound(**args)
-            #
-            raise HTTPError(status)
-
-    @get(uri_get_devices_type)
-    def get_devices_type(device_type):
-        #
-        args = _get_log_args(request)
-        #
-        try:
-            #
-            r = _device.getDevicesType(device_type)
-            #
-            if not bool(r):
-                status = httpStatusFailure
-                args['result'] = logFail
-            else:
-                status = httpStatusSuccess
-                args['result'] = logPass
-            #
-            args['http_response_code'] = status
-            args['description'] = '-'
-            log_inbound(**args)
-            #
-            response = HTTPResponse()
-            response.status = status
-            enable_cors(response)
-            #
-            if not isinstance(r, bool):
-                response.body = r
-            #
-            return response
-            #
-        except Exception as e:
-            #
-            status = httpStatusServererror
-            #
-            args['result'] = logException
-            args['http_response_code'] = status
-            args['description'] = '-'
-            args['exception'] = e
-            log_inbound(**args)
-            #
-            raise HTTPError(status)
-
-    @get(uri_get_device_specific)
-    def get_devices_specific(device_type, device_id):
-        #
-        args = _get_log_args(request)
-        #
-        try:
-            #
-            r = _device.getDevice(device_type, device_id)
-            #
-            if not bool(r):
-                status = httpStatusFailure
-                args['result'] = logFail
-            else:
-                status = httpStatusSuccess
-                args['result'] = logPass
-            #
-            args['http_response_code'] = status
-            args['description'] = '-'
-            log_inbound(**args)
-            #
-            response = HTTPResponse()
-            response.status = status
-            enable_cors(response)
-            #
-            if not isinstance(r, bool):
-                response.body = r
-            #
-            return response
-            #
-        except Exception as e:
-            #
-            status = httpStatusServererror
-            #
-            args['result'] = logException
-            args['http_response_code'] = status
-            args['description'] = '-'
-            args['exception'] = e
-            log_inbound(**args)
-            #
-            raise HTTPError(status)
-
-    ################################################################################################
-    # Send updates to device
-    ################################################################################################
-
-    @post(uri_get_device_specific)
-    def update_devices_specific(device_type, device_id):
-        #
-        args = _get_log_args(request)
-        #
-        try:
-            #
-            command = request.json
-            #
-            if device_type == 'thermostat':
-                if validate_thermostat(command):
-                    status = httpStatusSuccess if _device.setThermostat(device_id, command) else httpStatusFailure
-                else:
-                    status = httpStatusBadrequest
-            else:
-                status = httpStatusBadrequest
-            #
-            args['result'] = logPass if status == httpStatusSuccess else logFail
-            #
-            args['http_response_code'] = status
-            args['description'] = '-'
-            log_inbound(**args)
-            #
-            response = HTTPResponse()
-            response.status = status
-            enable_cors(response)
-            #
-            return response
-            #
-        except Exception as e:
-            #
-            status = httpStatusServererror
-            #
-            args['result'] = logException
-            args['http_response_code'] = status
-            args['description'] = '-'
-            args['exception'] = e
-            log_inbound(**args)
-            #
-            raise HTTPError(status)
+    @post('/devices/<device_type>/<device_id>')
+    def api_post_device_specific(device_type, device_id):
+        return post_device_specific(request, _nest, device_type, device_id)
 
     ################################################################################################
 

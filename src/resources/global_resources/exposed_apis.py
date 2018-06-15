@@ -1,7 +1,0 @@
-uri_config = '/config'
-uri_get_all = '/all'
-uri_get_structures = '/structures'
-uri_get_structure_specific = '/structure/<structure_id>'
-uri_get_devices = '/devices'
-uri_get_devices_type = '/devices/<device_type>'
-uri_get_device_specific = '/devices/<device_type>/<device_id>'
