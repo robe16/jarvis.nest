@@ -9,14 +9,14 @@ from service.nest import Nest
 from resources.global_resources.log_vars import logPass
 from resources.lang.enGB.logs import *
 
-from apis.uri_config import get_config
-from apis.uri_get_all import get_all
-from apis.uri_get_structures import get_structures
-from apis.uri_get_structure_specific import get_structure_specific
-from apis.uri_get_devices import get_devices
-from apis.uri_get_devices_type import get_devices_type
-from apis.uri_get_device_specific import get_device_specific
-from apis.uri_post_device_specific import post_device_specific
+from apis.get_config import get_config
+from apis.get_all import get_all
+from apis.get_structures import get_structures
+from apis.get_structure_specific import get_structure_specific
+from apis.get_devices import get_devices
+from apis.get_devices_type import get_devices_type
+from apis.get_device_specific import get_device_specific
+from apis.post_device_specific import post_device_specific
 
 
 def start_bottle(port_threads):
