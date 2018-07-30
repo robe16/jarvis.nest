@@ -1,7 +1,7 @@
-from bottle import get, post
-from bottle import request, run
+from bottle import request, run, route, get, post
 
 from config.config import get_cfg_port
+from common_functions.request_enable_cors import response_options
 from log.log import log_internal
 from service.nest import Nest
 from resources.global_resources.log_vars import logPass
@@ -30,6 +30,16 @@ def start_bottle():
     ################################################################################################
     # APIs
     ################################################################################################
+
+    @route('/config', method=['OPTIONS'])
+    @route('/all', method=['OPTIONS'])
+    @route('/structures', method=['OPTIONS'])
+    @route('/structure/<structure_id>', method=['OPTIONS'])
+    @route('/devices', method=['OPTIONS'])
+    @route('/devices/<device_type>', method=['OPTIONS'])
+    @route('/devices/<device_type>/<device_id>', method=['OPTIONS'])
+    def api_cors_options():
+        return response_options()
 
     @get('/config')
     def api_get_config():
