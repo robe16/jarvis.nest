@@ -38,40 +38,48 @@ def start_bottle():
     @route('/devices', method=['OPTIONS'])
     @route('/devices/<device_type>', method=['OPTIONS'])
     @route('/devices/<device_type>/<device_id>', method=['OPTIONS'])
-    def api_cors_options():
+    def api_cors_options(**kwargs):
         return response_options()
 
     @get('/config')
     def api_get_config():
-        return get_config(request)
+        response = get_config(request)
+        return response
 
     @get('/all')
     def api_get_all():
-        return get_all(request, _nest)
+        response = get_all(request, _nest)
+        return response
 
     @get('/structures')
     def api_get_structures():
-        return get_structures(request, _nest)
+        response = get_structures(request, _nest)
+        return response
 
     @get('/structure/<structure_id>')
     def api_get_structure_specific(structure_id):
-        return get_structure_specific(request, _nest, structure_id)
+        response = get_structure_specific(request, _nest, structure_id)
+        return response
 
     @get('/devices')
     def api_get_devices():
-        return get_devices(request, _nest)
+        response = get_devices(request, _nest)
+        return response
 
     @get('/devices/<device_type>')
     def api_get_devices_type(device_type):
-        return get_devices_type(request, _nest, device_type)
+        response = get_devices_type(request, _nest, device_type)
+        return response
 
     @get('/devices/<device_type>/<device_id>')
     def api_get_device_specific(device_type, device_id):
-        return get_device_specific(request, _nest, device_type, device_id)
+        response = get_device_specific(request, _nest, device_type, device_id)
+        return response
 
     @post('/devices/<device_type>/<device_id>')
     def api_post_device_specific(device_type, device_id):
-        return post_device_specific(request, _nest, device_type, device_id)
+        response = post_device_specific(request, _nest, device_type, device_id)
+        return response
 
     ################################################################################################
 
