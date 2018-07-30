@@ -38,8 +38,5 @@
         "client_id": "12345678-432a-0000-aa37-abcdefghijkl",
         "client_secret": "6Nq1234Fah4k3218abdcbcdTI"
     },
-    "port": {
-        "broadcast": 1040,
-        "listener": [1041, 1042, 1043, 1044]
-    }
+    "port": 1040
 }
