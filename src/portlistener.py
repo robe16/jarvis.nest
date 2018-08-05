@@ -1,7 +1,7 @@
 from bottle import request, run, route, get, post
 
 from config.config import get_cfg_port
-from common_functions.request_enable_cors import response_options
+from common_functions.request_enable_cors import response_options, enable_cors
 from log.log import log_internal
 from service.nest import Nest
 from resources.global_resources.log_vars import logPass
@@ -44,42 +44,42 @@ def start_bottle():
     @get('/config')
     def api_get_config():
         response = get_config(request)
-        return response
+        return enable_cors(response)
 
     @get('/all')
     def api_get_all():
         response = get_all(request, _nest)
-        return response
+        return enable_cors(response)
 
     @get('/structures')
     def api_get_structures():
         response = get_structures(request, _nest)
-        return response
+        return enable_cors(response)
 
     @get('/structure/<structure_id>')
     def api_get_structure_specific(structure_id):
         response = get_structure_specific(request, _nest, structure_id)
-        return response
+        return enable_cors(response)
 
     @get('/devices')
     def api_get_devices():
         response = get_devices(request, _nest)
-        return response
+        return enable_cors(response)
 
     @get('/devices/<device_type>')
     def api_get_devices_type(device_type):
         response = get_devices_type(request, _nest, device_type)
-        return response
+        return enable_cors(response)
 
     @get('/devices/<device_type>/<device_id>')
     def api_get_device_specific(device_type, device_id):
         response = get_device_specific(request, _nest, device_type, device_id)
-        return response
+        return enable_cors(response)
 
     @post('/devices/<device_type>/<device_id>')
     def api_post_device_specific(device_type, device_id):
         response = post_device_specific(request, _nest, device_type, device_id)
-        return response
+        return enable_cors(response)
 
     ################################################################################################
 
