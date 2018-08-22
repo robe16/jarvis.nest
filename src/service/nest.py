@@ -141,8 +141,8 @@ class Nest():
         headers = {'Authorization': 'Bearer {authcode}'.format(authcode=get_cfg_details_oauthToken()),
                    'Accept': 'text/event-stream'}
         #
-        while True:
-            try:
+        try:
+            while True:
                 #
                 r = requests.get(self._get_url(), headers=headers, stream=True)
                 #
@@ -191,8 +191,8 @@ class Nest():
                     #
                 log_internal(logFail, logDescNest_streamEnd)
                 #
-            except Exception as e:
-                log_internal(logException, logDescNest_streamError, exception=e)
+        except Exception as e:
+            log_internal(logException, logDescNest_streamError, exception=e)
 
     def _createCache(self):
         json_data = self._getAll()
