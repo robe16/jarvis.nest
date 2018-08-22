@@ -141,55 +141,58 @@ class Nest():
         headers = {'Authorization': 'Bearer {authcode}'.format(authcode=get_cfg_details_oauthToken()),
                    'Accept': 'text/event-stream'}
         #
-        try:
-            #
-            r = requests.get(self._get_url(), headers=headers, stream=True)
-            #
-            redirect_url = check_redirect(r)
-            if bool(redirect_url):
-                self._redirect_url = redirect_url.replace(uri_nest_devices, '')
-                r = requests.get(uri_nest_devices, headers=headers, stream=True)
-            #
-            log_internal(logPass, logDescNest_streamStart)
-            #
-            client = sseclient.SSEClient(r)
-            for event in client.events():
-                event_type = event.event
+        while True:
+            try:
                 #
-                # Different event types:
-                # 'open' - The event stream has been opened (not always received here)
-                # 'put' - The data has changed (or initial data sent)
-                # 'keep-alive' - No data updates. Receiving an HTTP header to keep the connection open
-                # 'auth_revoked' - The API authorization has been revoked
-                # 'error' - Error occurred, such as connection closed.
+                r = requests.get(self._get_url(), headers=headers, stream=True)
                 #
-                if event_type == 'put':
-                    #
-                    logDesc = []
-                    #
-                    json_data = json.loads(event.data)
-                    json_data = strip_data(json_data['data'])
-                    #
-                    if self._structures != json_data['structures']:
-                        self._structures = json_data['structures']
-                        logDesc.append('structures')
-                    if self._thermostats != json_data['devices']['thermostats']:
-                        self._thermostats = json_data['devices']['thermostats']
-                        logDesc.append('thermostats')
-                    if self._smokes != json_data['devices']['smoke_co_alarms']:
-                        self._smokes = json_data['devices']['smoke_co_alarms']
-                        logDesc.append('smoke_co_alarms')
-                    if self._cameras != json_data['devices']['cameras']:
-                        self._cameras = json_data['devices']['cameras']
-                        logDesc.append('cameras')
-                    #
-                    log_internal(logPass, logDescNest_streamUpdate, description=logDesc)
-                    #
-                elif event_type == 'auth_revoked':
-                    raise Exception('API authorization has been revoked')
+                redirect_url = check_redirect(r)
+                if bool(redirect_url):
+                    self._redirect_url = redirect_url.replace(uri_nest_devices, '')
+                    r = requests.get(uri_nest_devices, headers=headers, stream=True)
                 #
-        except Exception as e:
-            log_internal(logException, logDescNest_streamError, exception=e)
+                log_internal(logPass, logDescNest_streamStart)
+                #
+                client = sseclient.SSEClient(r)
+                for event in client.events():
+                    event_type = event.event
+                    #
+                    # Different event types:
+                    # 'open' - The event stream has been opened (not always received here)
+                    # 'put' - The data has changed (or initial data sent)
+                    # 'keep-alive' - No data updates. Receiving an HTTP header to keep the connection open
+                    # 'auth_revoked' - The API authorization has been revoked
+                    # 'error' - Error occurred, such as connection closed.
+                    #
+                    if event_type == 'put':
+                        #
+                        logDesc = []
+                        #
+                        json_data = json.loads(event.data)
+                        json_data = strip_data(json_data['data'])
+                        #
+                        if self._structures != json_data['structures']:
+                            self._structures = json_data['structures']
+                            logDesc.append('structures')
+                        if self._thermostats != json_data['devices']['thermostats']:
+                            self._thermostats = json_data['devices']['thermostats']
+                            logDesc.append('thermostats')
+                        if self._smokes != json_data['devices']['smoke_co_alarms']:
+                            self._smokes = json_data['devices']['smoke_co_alarms']
+                            logDesc.append('smoke_co_alarms')
+                        if self._cameras != json_data['devices']['cameras']:
+                            self._cameras = json_data['devices']['cameras']
+                            logDesc.append('cameras')
+                        #
+                        log_internal(logPass, logDescNest_streamUpdate, description=logDesc)
+                        #
+                    elif event_type == 'auth_revoked':
+                        raise Exception('API authorization has been revoked')
+                    #
+                log_internal(logFail, logDescNest_streamEnd)
+                #
+            except Exception as e:
+                log_internal(logException, logDescNest_streamError, exception=e)
 
     def _createCache(self):
         json_data = self._getAll()
